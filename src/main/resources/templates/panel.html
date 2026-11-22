@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Páginas')}"></head>
+<body>
+<nav th:replace="~{comun :: navegacion}"></nav>
+<main class="contenedor">
+    <header class="acciones">
+        <div><h1>Páginas</h1><p th:text="|${actor.nombre} · ${actor.rol.etiqueta}|"></p></div>
+        <a class="boton" th:if="${puedeCrear}" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/nueva}">Nueva página</a>
+    </header>
+    <section class="tarjeta">
+        <p th:if="${#lists.isEmpty(paginas)}">Todavía no tienes páginas para editar.</p>
+        <table th:unless="${#lists.isEmpty(paginas)}">
+            <thead><tr><th>Ruta</th><th>Publicación</th><th>Acciones</th></tr></thead>
+            <tbody><tr th:each="pagina : ${paginas}">
+                <td th:text="${pagina.ruta}"></td>
+                <td th:text="${pagina.publicadaId == null ? 'Sin publicar' : 'Publicada'}"></td>
+                <td><a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${pagina.id})}">Historial</a>
+                    <a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id})}">Editar</a></td>
+            </tr></tbody>
+        </table>
+    </section>
+</main>
+</body></html>

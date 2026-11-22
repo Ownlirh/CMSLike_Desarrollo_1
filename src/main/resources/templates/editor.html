@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Editor de páginas')}"></head>
+<body>
+<nav th:replace="~{comun :: navegacion}"></nav>
+<main class="contenedor">
+    <header><h1 th:text="${pagina == null ? 'Nueva página' : 'Editar ' + pagina.ruta}"></h1></header>
+    <p class="error" role="alert" th:if="${error}" th:text="${error}"></p>
+    <form id="editor" method="post" th:attr="data-preview=@{/admin/DashBoardAdminCMSPanel/editor/preview},data-pagina=${pagina?.id}"
+          th:action="${pagina == null} ? @{/admin/DashBoardAdminCMSPanel/paginas} : @{/admin/DashBoardAdminCMSPanel/paginas/{id}/borradores(id=${pagina.id})}">
+        <input type="hidden" name="origen" th:if="${origen != null}" th:value="${origen}">
+        <textarea hidden name="bloques" id="bloquesGuardados" th:text="${bloques}"></textarea>
+        <div class="editor">
+            <aside class="tarjeta biblioteca" aria-label="Bloques disponibles">
+                <h2>Agregar bloque</h2>
+                <button type="button" data-tipo="ENCABEZADO">+ Encabezado</button>
+                <button type="button" data-tipo="DESTACADA">+ Imagen destacada</button>
+                <button type="button" data-tipo="FILA_IMAGENES">+ Fila de imágenes</button>
+                <button type="button" data-tipo="TEXTO">+ Texto</button>
+                <button type="button" data-tipo="BOTON">+ Botón</button>
+            </aside>
+            <section class="tarjeta">
+                <div class="campos">
+                    <label th:if="${pagina == null}">Ruta <input name="ruta" th:value="${ruta}" placeholder="/noticias/evento" maxlength="180" required></label>
+                    <label>Título de la página <input name="titulo" th:value="${titulo}" maxlength="160" required></label>
+                    <label>Plantilla
+                        <select name="plantilla">
+                            <option value="normal" th:selected="${plantilla == 'normal'}">Normal</option>
+                            <option value="amplia" th:selected="${plantilla == 'amplia'}">Amplia</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="acciones">
+                    <h2>Composición</h2>
+                    <button type="button" class="secundario" id="previsualizar" disabled>Vista previa</button>
+                </div>
+                <section id="vistaEditor" hidden aria-label="Vista previa de la página">
+                    <div class="acciones"><button type="button" class="secundario" id="vistaMovil">Simular móvil</button>
+                        <button type="button" class="secundario" id="cerrarVista">Cerrar vista previa</button></div>
+                    <iframe id="paginaPrevia" title="Vista previa de la página" sandbox></iframe>
+                </section>
+                <p id="errorVista" class="error" role="alert" hidden></p>
+                <div id="bloques"></div>
+                <noscript>Activa JavaScript para editar los bloques.</noscript>
+                <div class="acciones"><a th:href="@{/admin/DashBoardAdminCMSPanel}">Cancelar</a>
+                    <button id="guardar" disabled>Guardar borrador</button></div>
+            </section>
+        </div>
+    </form>
+</main>
+<script th:src="@{/js/editor.js}" defer></script>
+</body></html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="cabecera(titulo)">
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo + ' · CMS'}">Panel CMS</title>
+    <link rel="stylesheet" th:href="@{/css/cms.css}">
+</head>
+<body>
+<nav class="barra" th:fragment="navegacion">
+    <a class="marca" th:href="@{/admin/DashBoardAdminCMSPanel}">CMS</a>
+    <a th:href="@{/admin/DashBoardAdminCMSPanel}">Páginas</a>
+    <th:block th:if="${actor.rol.puedeRevisar()}">
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/revisiones}">Revisiones</a>
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/permisos}">Permisos</a>
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/auditoria}">Auditoría</a>
+    </th:block>
+    <th:block th:if="${actor.rol.name() == 'MANAGER'}">
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/usuarios}">Usuarios</a>
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/configuracion}">Apariencia</a>
+    </th:block>
+    <a class="espacio" th:href="@{/}">Ver sitio</a>
+    <form method="post" th:action="@{/admin/salir}"><button class="secundario">Salir</button></form>
+</nav>
+<p class="aviso" role="status" th:fragment="mensaje" th:if="${mensaje}" th:text="${mensaje}"></p>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta th:if="${preview}" name="robots" content="noindex,nofollow">
+    <title th:text="${revision == null ? sitio.nombre : revision.titulo + ' · ' + sitio.nombre}"></title>
+    <link rel="stylesheet" th:href="@{/css/cms.css}">
+    <script th:if="${preview}" th:src="@{/js/preview.js}" defer></script>
+</head>
+<body th:style="|--marca: ${sitio.color}|">
+<header class="barra publica">
+    <a class="marca" th:href="@{/}"><img th:if="${sitio.logo}" th:src="${sitio.logo}" alt="" referrerpolicy="no-referrer">
+        <span th:text="${sitio.nombre}"></span></a>
+    <a th:each="pagina : ${navegacion}" th:href="${pagina.ruta}" th:text="${pagina.ruta.substring(1)}"></a>
+</header>
+<div class="preview-bar" th:if="${preview}">
+    <span>Vista previa de la revisión <strong th:text="${revision.id}"></strong></span>
+    <div class="acciones-inline"><button id="alternarVista" type="button" aria-pressed="false">Simular móvil</button>
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${revision.paginaId})}">Volver al historial</a></div>
+</div>
+<section class="preview-decision" th:if="${puedeDecidir}" aria-label="Decisión de revisión">
+    <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/aprobar(id=${revision.id})}">
+        <button>Aprobar y publicar</button>
+    </form>
+    <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/devolver(id=${revision.id})}">
+        <label>Observación <textarea name="observacion" maxlength="500" required></textarea></label>
+        <button class="secundario">Devolver</button>
+    </form>
+</section>
+<main class="contenido" th:classappend="${revision != null and revision.plantilla == 'amplia'} ? 'amplia'">
+    <th:block th:if="${revision != null}">
+        <h1 th:text="${revision.titulo}"></h1>
+        <section th:each="bloque : ${bloques}" class="bloque" th:switch="${bloque.tipo.name()}">
+            <div th:case="'ENCABEZADO'" th:classappend="${bloque.estilo}">
+                <h2 th:text="${bloque.titulo}"></h2><p th:if="${bloque.texto}" th:text="${bloque.texto}"></p>
+            </div>
+            <figure th:case="'DESTACADA'" th:classappend="${bloque.estilo}">
+                <img th:src="${bloque.imagenes[0].url}" th:alt="${bloque.imagenes[0].alternativo}" referrerpolicy="no-referrer">
+                <figcaption th:if="${bloque.titulo}" th:text="${bloque.titulo}"></figcaption>
+            </figure>
+            <div th:case="'FILA_IMAGENES'" class="galeria" th:classappend="|columnas-${#lists.size(bloque.imagenes)}|">
+                <div th:each="imagen : ${bloque.imagenes}">
+                    <a th:if="${not #strings.isEmpty(imagen.enlace)}" th:href="${imagen.enlace}">
+                        <img th:src="${imagen.url}" th:alt="${imagen.alternativo}" referrerpolicy="no-referrer"></a>
+                    <img th:if="${#strings.isEmpty(imagen.enlace)}" th:src="${imagen.url}" th:alt="${imagen.alternativo}" referrerpolicy="no-referrer">
+                </div>
+            </div>
+            <div th:case="'TEXTO'">
+                <h2 th:unless="${#strings.isEmpty(bloque.titulo)}" th:text="${bloque.titulo}"></h2>
+                <ul th:if="${bloque.estilo == 'lista'}">
+                    <li th:each="elemento : ${bloque.elementosLista()}" th:text="${elemento}"></li>
+                </ul>
+                <p th:unless="${bloque.estilo == 'lista'}" class="texto" th:text="${bloque.texto}"></p>
+                <a th:unless="${#strings.isEmpty(bloque.url)}" th:href="${bloque.url}">Más información</a>
+            </div>
+            <a th:case="'BOTON'" class="boton" th:classappend="${bloque.estilo}" th:href="${bloque.url}" th:text="${bloque.titulo}"></a>
+        </section>
+    </th:block>
+    <section th:if="${revision == null}"><h1 th:text="${sitio.nombre}"></h1>
+        <p th:if="${#lists.isEmpty(navegacion)}">Todavía no hay páginas publicadas.</p>
+        <a th:href="@{/admin/DashBoardAdminCMSPanel}">Ingresar al panel</a>
+    </section>
+</main>
+</body></html>

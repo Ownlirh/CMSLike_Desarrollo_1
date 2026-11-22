@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Historial')}"></head>
+<body>
+<nav th:replace="~{comun :: navegacion}"></nav>
+<main class="contenedor">
+    <header class="acciones">
+        <div><h1 th:text="${pagina.ruta}"></h1>
+            <a th:if="${pagina.publicadaId != null}" th:href="${pagina.ruta}">Abrir página publicada</a></div>
+        <a class="boton" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id},revision=${pagina.publicadaId})}">Nuevo borrador</a>
+    </header>
+    <p th:replace="~{comun :: mensaje}"></p>
+    <section class="tarjeta">
+        <h2>Historial de revisiones</h2>
+        <table><thead><tr><th>Versión</th><th>Título</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody><tr th:each="revision : ${historial}">
+                <td th:text="|${revision.id}|"></td>
+                <td th:text="${revision.titulo}"></td>
+                <td><span th:text="${revision.id == pagina.publicadaId ? 'PUBLICADA' : revision.estado}"></span>
+                    <small th:if="${revision.observacion}" th:text="${revision.observacion}"></small></td>
+                <td class="acciones-inline">
+                    <a th:href="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/preview(id=${revision.id})}">Vista previa</a>
+                    <a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id},revision=${revision.id})}">Editar copia</a>
+                    <form th:if="${revision.estado.name() == 'BORRADOR' and (actor.rol.puedeRevisar() or actor.id == revision.autorId)}"
+                          method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/enviar(id=${revision.id})}">
+                        <button>Enviar a revisión</button>
+                    </form>
+                </td>
+            </tr></tbody>
+        </table>
+    </section>
+</main>
+</body></html>

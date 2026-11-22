@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: cms
+      POSTGRES_USER: cms
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cms -d cms"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+  app:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/cms
+      DB_USER: cms
+      DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD}
+      CMS_MANAGER_USUARIO: ${CMS_MANAGER_USUARIO:-manager}
+      CMS_MANAGER_CLAVE: ${CMS_MANAGER_CLAVE:?Define CMS_MANAGER_CLAVE}
+      CMS_COOKIE_SEGURA: ${CMS_COOKIE_SEGURA:-false}
+    ports:
+      - "127.0.0.1:${CMS_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  postgres_data:

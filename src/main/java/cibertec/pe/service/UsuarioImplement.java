@@ -68,6 +68,9 @@ public class UsuarioImplement {
         if (id.equals(actor.getId()) && (rol != Rol.MANAGER || !activo)) {
             throw new IllegalArgumentException("Mantén tu cuenta activa con el rol Manager.");
         }
+        if (!clave.isBlank() || usuario.isActivo() != activo || usuario.getRol() != rol) {
+            usuario.setVersionSesion(usuario.getVersionSesion() + 1);
+        }
         if (!clave.isBlank()) {
             validarClave(clave);
             usuario.setClave(claves.encode(clave));

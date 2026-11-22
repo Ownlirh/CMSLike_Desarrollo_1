@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -160,6 +161,28 @@ class CmsIT {
         mvc.perform(get(PANEL).with(user(cuenta.getNombre()))).andExpect(status().isForbidden());
         mvc.perform(formLogin("/admin/ingresar").user(cuenta.getNombre()).password(CLAVE))
                 .andExpect(redirectedUrl("/admin/ingresar?error"));
+    }
+
+    @Test
+    void revocaSesionesTrasRotarLaClaveODarDeBaja() throws Exception {
+        Usuario cuenta = usuarios.registrarUsuario(manager, "cuenta-sesion", CLAVE, Rol.CONTENT_CREATOR);
+        MockHttpSession primera = autenticar(cuenta.getNombre(), CLAVE);
+        mvc.perform(get(PANEL).session(primera)).andExpect(status().isOk());
+
+        String nuevaClave = "nueva-clave-de-prueba-2026";
+        usuarios.actualizarUsuario(manager, cuenta.getId(), Rol.CONTENT_CREATOR, true, nuevaClave);
+        mvc.perform(get(PANEL).session(primera)).andExpect(redirectedUrl("/admin/ingresar"));
+
+        MockHttpSession segunda = autenticar(cuenta.getNombre(), nuevaClave);
+        usuarios.actualizarUsuario(manager, cuenta.getId(), Rol.CONTENT_CREATOR, false, "");
+        usuarios.actualizarUsuario(manager, cuenta.getId(), Rol.CONTENT_CREATOR, true, "");
+        mvc.perform(get(PANEL).session(segunda)).andExpect(redirectedUrl("/admin/ingresar"));
+        mvc.perform(get(PANEL).session(autenticar(cuenta.getNombre(), nuevaClave))).andExpect(status().isOk());
+    }
+
+    private MockHttpSession autenticar(String nombre, String clave) throws Exception {
+        return (MockHttpSession) mvc.perform(formLogin("/admin/ingresar").user(nombre).password(clave))
+                .andExpect(redirectedUrl(PANEL)).andReturn().getRequest().getSession(false);
     }
 
     @Test

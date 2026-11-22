@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: CMSLike_Desarrollo_1
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cms}
+    username: ${DB_USER:cms}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    default-schema: public
+    schemas: public,audit
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${CMS_COOKIE_SEGURA:false}
+cms:
+  manager:
+    usuario: ${CMS_MANAGER_USUARIO:}
+    clave: ${CMS_MANAGER_CLAVE:}

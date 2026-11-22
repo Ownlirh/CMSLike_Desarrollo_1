@@ -47,7 +47,7 @@ class CmsIT {
     private static final String CLAVE = "clave-de-prueba-2026";
     private static final String BLOQUES = """
             [{"tipo":"ENCABEZADO","titulo":"Título del bloque","estilo":"centro"},
-            {"tipo":"TEXTO","texto":"<script>Contenido escapado</script>"},
+            {"tipo":"TEXTO","estilo":"clasico","texto":"<script>Contenido escapado</script>"},
             {"tipo":"TEXTO","titulo":"Lista de temas","estilo":"lista","texto":"Uno\\nDos","url":"/home"},
             {"tipo":"FILA_IMAGENES","imagenes":[
                 {"url":"https://ejemplo.test/a.png","alternativo":"Imagen A"},

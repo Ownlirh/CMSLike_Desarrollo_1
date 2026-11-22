@@ -45,7 +45,8 @@ function campo(padre, objeto, clave, etiqueta, opciones = {}) {
     } else {
         control.maxLength = maximo;
     }
-    control.value = objeto[clave] || (valores ? valores[0][0] : '');
+    const valorActual = objeto[clave] ?? '';
+    control.value = valores && !valores.some(([valor]) => valor === valorActual) ? valores[0][0] : valorActual;
     control.required = requerido;
     control.addEventListener('input', () => { objeto[clave] = control.value; });
     rotulo.append(control);

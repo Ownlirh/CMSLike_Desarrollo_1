@@ -1,6 +1,7 @@
 package cibertec.pe.controller;
 
 import cibertec.pe.config.SeguridadConfig;
+import cibertec.pe.model.EstadoRevision;
 import cibertec.pe.model.Revision;
 import cibertec.pe.service.ContenidoImplement;
 import cibertec.pe.service.PaginaImplement;
@@ -55,8 +56,10 @@ public class SitioController {
     public String mostrarPreview(@PathVariable Long id, Principal principal, HttpServletResponse respuesta, Model modelo) {
         respuesta.setHeader("Cache-Control", "no-store");
         respuesta.setHeader("X-Robots-Tag", "noindex");
-        Revision revision = paginas.previsualizar(usuarios.buscarUsuario(principal.getName()), id);
+        var actor = usuarios.buscarUsuario(principal.getName());
+        Revision revision = paginas.previsualizar(actor, id);
         modelo.addAttribute("preview", true);
+        modelo.addAttribute("puedeDecidir", actor.getRol().puedeRevisar() && revision.getEstado() == EstadoRevision.EN_REVISION);
         return prepararPagina(revision, modelo);
     }
 

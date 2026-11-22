@@ -8,6 +8,7 @@ const nombres = {
 const estilos = {
     ENCABEZADO: ['izquierda', 'centro', 'derecha'],
     DESTACADA: ['baja', 'media', 'alta'],
+    TEXTO: ['parrafos', 'lista'],
     BOTON: ['principal', 'secundario']
 };
 let bloques;
@@ -44,7 +45,7 @@ function campo(padre, objeto, clave, etiqueta, opciones = {}) {
     } else {
         control.maxLength = maximo;
     }
-    control.value = objeto[clave] ?? '';
+    control.value = objeto[clave] || (valores ? valores[0][0] : '');
     control.required = requerido;
     control.addEventListener('input', () => { objeto[clave] = control.value; });
     rotulo.append(control);
@@ -140,13 +141,18 @@ function mostrarBloques() {
             campo(panel, bloque, 'titulo', bloque.tipo === 'BOTON' ? 'Texto del botón' : 'Título',
                 {requerido: bloque.tipo !== 'DESTACADA'});
         }
+        if (bloque.tipo === 'TEXTO') {
+            campo(panel, bloque, 'titulo', 'Subtítulo opcional');
+            campo(panel, bloque, 'url', 'Enlace opcional', {maximo: 500});
+        }
         if (bloque.tipo === 'TEXTO' || bloque.tipo === 'ENCABEZADO') {
-            campo(panel, bloque, 'texto', bloque.tipo === 'TEXTO' ? 'Contenido' : 'Subtítulo',
+            campo(panel, bloque, 'texto', bloque.tipo === 'TEXTO' ? 'Contenido (un elemento por línea si eliges Lista)' : 'Subtítulo',
                 {requerido: bloque.tipo === 'TEXTO', multilinea: true, maximo: 4000});
         }
         if (estilos[bloque.tipo]) {
-            const etiqueta = {ENCABEZADO: 'Alineación', DESTACADA: 'Altura', BOTON: 'Estilo'}[bloque.tipo];
-            campo(panel, bloque, 'estilo', etiqueta, {valores: estilos[bloque.tipo].map(valor => [valor, valor])});
+            const etiqueta = {ENCABEZADO: 'Alineación', DESTACADA: 'Altura', TEXTO: 'Formato', BOTON: 'Estilo'}[bloque.tipo];
+            const etiquetasTexto = {parrafos: 'Párrafos', lista: 'Lista'};
+            campo(panel, bloque, 'estilo', etiqueta, {valores: estilos[bloque.tipo].map(valor => [valor, etiquetasTexto[valor] ?? valor])});
         }
         if (bloque.tipo === 'BOTON') campo(panel, bloque, 'url', 'Enlace', {requerido: true, maximo: 500});
         if (bloque.tipo === 'DESTACADA' || bloque.tipo === 'FILA_IMAGENES') mostrarImagenes(panel, bloque);

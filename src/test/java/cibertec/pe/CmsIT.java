@@ -48,6 +48,7 @@ class CmsIT {
     private static final String BLOQUES = """
             [{"tipo":"ENCABEZADO","titulo":"Título del bloque","estilo":"centro"},
             {"tipo":"TEXTO","texto":"<script>Contenido escapado</script>"},
+            {"tipo":"TEXTO","titulo":"Lista de temas","estilo":"lista","texto":"Uno\\nDos","url":"/home"},
             {"tipo":"FILA_IMAGENES","imagenes":[
                 {"url":"https://ejemplo.test/a.png","alternativo":"Imagen A"},
                 {"url":"https://ejemplo.test/b.png","alternativo":"Imagen B","enlace":"/home"}
@@ -126,6 +127,13 @@ class CmsIT {
 
         mvc.perform(post(revisar + "/enviar").with(user(creador.getNombre())).with(csrf()))
                 .andExpect(status().is3xxRedirection());
+        mvc.perform(get(revisar + "/preview").with(user(revisor.getNombre())))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Aprobar y publicar")))
+                .andExpect(content().string(containsString("<li>Dos</li>")));
+        mvc.perform(get(revisar + "/preview").with(user(creador.getNombre())))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Aprobar y publicar"))));
         mvc.perform(get(PANEL + "/revisiones").with(user(revisor.getNombre()))).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Evento en borrador")));
         mvc.perform(post(revisar + "/aprobar").with(user(creador.getNombre())).with(csrf()))
@@ -134,6 +142,9 @@ class CmsIT {
                 .andExpect(status().is3xxRedirection());
         mvc.perform(get("/noticias/evento")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Evento en borrador")))
+                .andExpect(content().string(containsString("<li>Dos</li>")))
+                .andExpect(content().string(containsString("href=\"/home\">Más información")))
+                .andExpect(content().string(not(containsString("Aprobar y publicar"))))
                 .andExpect(content().string(not(containsString("Simular móvil"))));
         assertEquals(1, sql.queryForObject(
                 "select count(*) from audit.evento where revision_id = ? and accion = 'PUBLICAR_REVISION'",

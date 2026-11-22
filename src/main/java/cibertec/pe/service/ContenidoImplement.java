@@ -77,7 +77,8 @@ public class ContenidoImplement {
         boolean valido = switch (bloque.tipo()) {
             case ENCABEZADO -> presente(bloque.titulo()) && cantidad == 0
                     && Set.of("izquierda", "centro", "derecha").contains(estilo(bloque));
-            case TEXTO -> presente(bloque.texto()) && cantidad == 0;
+            case TEXTO -> presente(bloque.texto()) && cantidad == 0
+                    && Set.of("", "parrafos", "lista").contains(estilo(bloque));
             case BOTON -> presente(bloque.titulo()) && enlaceValido(bloque.url()) && cantidad == 0
                     && Set.of("principal", "secundario").contains(estilo(bloque));
             case DESTACADA -> cantidad == 1 && Set.of("baja", "media", "alta").contains(estilo(bloque));

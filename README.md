@@ -2,6 +2,22 @@
 
 Aplicación Spring Boot MVC con Thymeleaf y PostgreSQL. El sitio público y el panel usan el mismo servidor. El código sigue la estructura `cibertec.pe` con paquetes `controller`, `model`, `repository` y `service`.
 
+## Demo de la agencia turística
+
+```bash
+./scripts/iniciar-demo.sh
+```
+
+El script crea las contraseñas locales que falten en `.env`, inicia Docker Compose y carga cuatro páginas publicadas. La portada `/home` enlaza a `/cusco`, `/arequipa` y `/tarapoto`. Los itinerarios son ejemplos de contenido y enlazan a [Perú Travel](https://www.peru.travel/).
+
+| Usuario | Rol | Contraseña local en `.env` |
+|---|---|---|
+| `manager` | Manager | `CMS_MANAGER_CLAVE` |
+| `revisor-demo` | Content Creator Manager | `CMS_DEMO_REVISOR_CLAVE` |
+| `creador-demo` | Content Creator | `CMS_DEMO_CREADOR_CLAVE` |
+
+El usuario Manager puede tener otro nombre si ya se configuró `CMS_MANAGER_USUARIO`. El creador recibe acceso de edición para los destinos que crea el script. Repetir la carga conserva las contraseñas, las páginas existentes y los permisos que ya se hayan revocado. La carga es opcional y se controla con `CMS_DEMO_ACTIVA`. En producción, déjala desactivada.
+
 ## Ejecutar con Docker
 
 Crea un archivo local `.env` con `DB_PASSWORD` y `CMS_MANAGER_CLAVE`. La contraseña inicial debe tener al menos 12 caracteres y un máximo de 72 bytes. Puedes indicar `CMS_MANAGER_USUARIO` y `CMS_PORT`, que toman los valores `manager` y `8080` por defecto.

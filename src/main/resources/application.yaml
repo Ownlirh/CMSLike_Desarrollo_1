@@ -23,3 +23,7 @@ cms:
   manager:
     usuario: ${CMS_MANAGER_USUARIO:}
     clave: ${CMS_MANAGER_CLAVE:}
+  demo:
+    activa: ${CMS_DEMO_ACTIVA:false}
+    revisor-clave: ${CMS_DEMO_REVISOR_CLAVE:}
+    creador-clave: ${CMS_DEMO_CREADOR_CLAVE:}

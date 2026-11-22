@@ -1,0 +1,40 @@
+[
+  {
+    "ruta": "/home",
+    "titulo": "Rutas del Perú",
+    "bloques": [
+      {"tipo":"ENCABEZADO","titulo":"Elige tu próxima ruta","texto":"Explora tres destinos con recorridos que combinan cultura, gastronomía y naturaleza.","estilo":"centro"},
+      {"tipo":"TEXTO","titulo":"Destinos de la agencia","estilo":"lista","texto":"Cusco · Centro histórico y Valle Sagrado\nArequipa · Calles de sillar y valle del Colca\nTarapoto · Cataratas y Laguna Azul"},
+      {"tipo":"BOTON","titulo":"Explorar Cusco","url":"/cusco","estilo":"principal"},
+      {"tipo":"BOTON","titulo":"Explorar Arequipa","url":"/arequipa","estilo":"secundario"},
+      {"tipo":"BOTON","titulo":"Explorar Tarapoto","url":"/tarapoto","estilo":"secundario"}
+    ]
+  },
+  {
+    "ruta": "/cusco",
+    "titulo": "Cusco",
+    "bloques": [
+      {"tipo":"ENCABEZADO","titulo":"Entre los Andes y el Valle Sagrado","texto":"Empieza en la ciudad y sigue el camino hacia los pueblos del valle.","estilo":"izquierda"},
+      {"tipo":"TEXTO","titulo":"Una ruta de tres días","estilo":"lista","texto":"Día 1 · Paseo por la Plaza de Armas y el centro histórico.\nDía 2 · Visita al mercado y al conjunto arqueológico de Pisac.\nDía 3 · Recorrido por Ollantaytambo y tiempo para conocer sus calles.","url":"https://www.peru.travel/es/destinos/cusco"},
+      {"tipo":"BOTON","titulo":"Ver todos los destinos","url":"/home","estilo":"secundario"}
+    ]
+  },
+  {
+    "ruta": "/arequipa",
+    "titulo": "Arequipa",
+    "bloques": [
+      {"tipo":"ENCABEZADO","titulo":"Sillar, picanterías y paisajes del Colca","texto":"Dedica la primera parte del viaje a la ciudad y reserva tiempo para salir al valle.","estilo":"izquierda"},
+      {"tipo":"TEXTO","titulo":"Una ruta de tres días","estilo":"lista","texto":"Día 1 · Paseo por el centro histórico y el barrio de San Lázaro.\nDía 2 · Almuerzo en una picantería y tiempo para recorrer la ciudad.\nDía 3 · Salida al valle del Colca para disfrutar del paisaje.","url":"https://www.peru.travel/es/atractivos/centro-historico-de-arequipa"},
+      {"tipo":"BOTON","titulo":"Ver todos los destinos","url":"/home","estilo":"secundario"}
+    ]
+  },
+  {
+    "ruta": "/tarapoto",
+    "titulo": "Tarapoto",
+    "bloques": [
+      {"tipo":"ENCABEZADO","titulo":"Un recorrido por la selva de San Martín","texto":"Combina las salidas a la naturaleza con un paseo por la ciudad.","estilo":"izquierda"},
+      {"tipo":"TEXTO","titulo":"Una ruta de tres días","estilo":"lista","texto":"Día 1 · Paseo por la Plaza de Armas y visita al centro artesanal.\nDía 2 · Excursión a la catarata de Ahuashiyacu.\nDía 3 · Salida a Sauce y tiempo junto a la Laguna Azul.","url":"https://www.peru.travel/es/destinos/san-martin"},
+      {"tipo":"BOTON","titulo":"Ver todos los destinos","url":"/home","estilo":"secundario"}
+    ]
+  }
+]

@@ -5,6 +5,7 @@ import cibertec.pe.model.Revision;
 import cibertec.pe.model.Rol;
 import cibertec.pe.model.Usuario;
 import cibertec.pe.repository.IEventoRepository;
+import cibertec.pe.service.DemoImplement;
 import cibertec.pe.service.PaginaImplement;
 import cibertec.pe.service.PermisoImplement;
 import cibertec.pe.service.UsuarioImplement;
@@ -58,6 +59,7 @@ class CmsIT {
     @Autowired WebApplicationContext contexto;
     @Autowired UsuarioImplement usuarios;
     @Autowired PaginaImplement paginas;
+    @Autowired DemoImplement demo;
     @Autowired PermisoImplement permisos;
     @Autowired IEventoRepository eventos;
     @Autowired JdbcTemplate sql;
@@ -208,7 +210,7 @@ class CmsIT {
     @Test
     void cuentaUnaPublicacionCuandoDosRevisoresApruebanALaVez() throws Exception {
         Usuario revisor = usuarios.registrarUsuario(manager, "revisor-concurrente", CLAVE, Rol.CONTENT_CREATOR_MANAGER);
-        Revision borrador = paginas.crearPagina(manager, "/home", "Concurrente", "normal", "[]");
+        Revision borrador = paginas.crearPagina(manager, "/revision-concurrente", "Concurrente", "normal", "[]");
         paginas.enviarRevision(manager, borrador.getId());
         CountDownLatch salida = new CountDownLatch(1);
         try (var ejecutor = Executors.newFixedThreadPool(2)) {
@@ -220,8 +222,42 @@ class CmsIT {
         assertEquals(1, sql.queryForObject(
                 "select count(*) from audit.evento where revision_id = ? and accion = 'PUBLICAR_REVISION'",
                 Integer.class, borrador.getId()));
-        mvc.perform(get("/home")).andExpect(status().isOk()).andExpect(content().string(containsString("Concurrente")));
+        mvc.perform(get("/revision-concurrente")).andExpect(status().isOk()).andExpect(content().string(containsString("Concurrente")));
+    }
+
+    @Test
+    void cargaDemoTuristicaSinDuplicarNiReponerPermisosRevocados() throws Exception {
+        String claveRevisor = "clave-revisor-pruebas";
+        String claveCreador = "clave-creador-pruebas";
+        demo.sembrarDemo("manager", claveRevisor, claveCreador);
+        Usuario revisor = usuarios.buscarUsuario("revisor-demo");
+        Usuario creador = usuarios.buscarUsuario("creador-demo");
+        assertEquals(Rol.CONTENT_CREATOR_MANAGER, revisor.getRol());
+        assertEquals(Rol.CONTENT_CREATOR, creador.getRol());
+        mvc.perform(get(PANEL).session(autenticar(revisor.getNombre(), claveRevisor))).andExpect(status().isOk());
+        mvc.perform(get(PANEL).session(autenticar(creador.getNombre(), claveCreador))).andExpect(status().isOk());
         mvc.perform(get("/")).andExpect(redirectedUrl("/home"));
+        mvc.perform(get("/home")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Explorar Tarapoto")));
+        for (String ruta : List.of("/cusco", "/arequipa", "/tarapoto")) {
+            mvc.perform(get(ruta)).andExpect(status().isOk())
+                    .andExpect(content().string(containsString("Una ruta de tres días")));
+        }
+
+        Revision cusco = paginas.buscarPublicada("/cusco");
+        assertEquals(3, paginas.listarPaginas(creador).size());
+        permisos.cambiarEdicion(manager, creador.getId(), cusco.getPaginaId(), false);
+        Revision cambio = paginas.guardarBorrador(manager, cusco.getPaginaId(), cusco.getId(),
+                "Cusco actualizado", "normal", "[]");
+        paginas.enviarRevision(manager, cambio.getId());
+        paginas.aprobarRevision(manager, cambio.getId());
+        long eventosPrevios = eventos.count();
+
+        demo.sembrarDemo("manager", claveRevisor, claveCreador);
+
+        assertEquals(eventosPrevios, eventos.count());
+        assertEquals(cambio.getId(), paginas.buscarPublicada("/cusco").getId());
+        assertEquals(2, paginas.listarPaginas(creador).size());
     }
 
     private Callable<Integer> aprobarAlMismoTiempo(Usuario actor, Long revision, CountDownLatch salida) {

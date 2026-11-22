@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Revisiones')}"></head>
+<body>
+<nav th:replace="~{comun :: navegacion}"></nav>
+<main class="contenedor"><h1>Revisiones pendientes</h1>
+    <section class="tarjeta" th:if="${#lists.isEmpty(revisiones)}">No hay revisiones pendientes.</section>
+    <section class="tarjeta pendiente" th:each="revision : ${revisiones}">
+        <h2 th:text="${revision.titulo}"></h2>
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${revision.paginaId})}">Ver historial</a>
+        <a th:href="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/preview(id=${revision.id})}">Abrir vista previa</a>
+        <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/aprobar(id=${revision.id})}">
+            <button>Aprobar y publicar</button>
+        </form>
+        <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/devolver(id=${revision.id})}">
+            <label>Observación <textarea name="observacion" maxlength="500" required></textarea></label>
+            <button class="secundario">Devolver</button>
+        </form>
+    </section>
+</main></body></html>

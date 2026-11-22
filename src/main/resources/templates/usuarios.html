@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Usuarios')}"></head>
+<body><nav th:replace="~{comun :: navegacion}"></nav>
+<main class="contenedor">
+    <h1>Usuarios</h1><p th:replace="~{comun :: mensaje}"></p>
+    <section class="tarjeta">
+        <h2>Nuevo usuario</h2>
+        <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/usuarios}">
+            <div class="campos">
+                <label>Usuario <input name="nombre" pattern="[a-zA-Z0-9._\-]{3,100}" required></label>
+                <label>Contraseña <input name="clave" type="password" minlength="12" autocomplete="new-password" required></label>
+                <label>Rol <select name="rol"><option th:each="rol : ${roles}" th:value="${rol.name()}" th:text="${rol.etiqueta}"></option></select></label>
+            </div>
+            <button>Registrar usuario</button>
+        </form>
+    </section>
+    <section class="tarjeta">
+        <h2>Usuarios registrados</h2>
+        <table><thead><tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead>
+            <tbody><tr th:each="usuario : ${usuarios}"><td th:text="${usuario.nombre}"></td>
+                <td th:text="${usuario.rol.etiqueta}"></td>
+                <td><details><summary>Editar cuenta</summary>
+                    <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/usuarios/{id}(id=${usuario.id})}">
+                        <label>Rol <select name="rol">
+                            <option th:each="rol : ${roles}" th:value="${rol.name()}" th:text="${rol.etiqueta}"
+                                    th:selected="${usuario.rol == rol}"></option>
+                        </select></label>
+                        <label>Estado <select name="activo">
+                            <option value="true" th:selected="${usuario.activo}">Activo</option>
+                            <option value="false" th:selected="${!usuario.activo}">Inactivo</option>
+                        </select></label>
+                        <label>Nueva contraseña <input type="password" name="clave" minlength="12" autocomplete="new-password"></label>
+                        <button>Actualizar</button>
+                    </form>
+                </details></td></tr></tbody></table>
+    </section>
+</main></body></html>

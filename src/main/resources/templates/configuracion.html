@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Apariencia')}"></head>
+<body><nav th:replace="~{comun :: navegacion}"></nav>
+<main class="contenedor"><h1>Apariencia</h1><p th:replace="~{comun :: mensaje}"></p>
+    <form class="tarjeta" method="post" th:action="@{/admin/DashBoardAdminCMSPanel/configuracion}">
+        <label>Nombre del sitio <input name="nombre" th:value="${sitio.nombre}" maxlength="100" required></label>
+        <label>URL del logo <input name="logo" th:value="${sitio.logo}" maxlength="500"></label>
+        <label>Color principal <input type="color" name="color" th:value="${sitio.color}" required></label>
+        <button>Guardar configuración</button>
+    </form>
+</main></body></html>

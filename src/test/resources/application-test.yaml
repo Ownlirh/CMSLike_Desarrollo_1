@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: ${CMS_TEST_DB_URL:jdbc:h2:mem:cms-${random.uuid};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${CMS_TEST_DB_USER:sa}
+    password: ${CMS_TEST_DB_PASSWORD:}
+  thymeleaf:
+    cache: false

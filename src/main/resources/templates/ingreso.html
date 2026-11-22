@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ingresar · CMS</title><link rel="stylesheet" th:href="@{/css/cms.css}"></head>
+<body class="acceso"><main class="tarjeta">
+    <h1>Ingresar al CMS</h1>
+    <p class="error" th:if="${param.error}">Usuario o contraseña incorrectos.</p>
+    <form method="post" th:action="@{/admin/ingresar}">
+        <label>Usuario <input name="username" autocomplete="username" required></label>
+        <label>Contraseña <input type="password" name="password" autocomplete="current-password" required></label>
+        <button>Ingresar</button>
+    </form>
+    <a href="/">Volver al sitio</a>
+</main></body></html>

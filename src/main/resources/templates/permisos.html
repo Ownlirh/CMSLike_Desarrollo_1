@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Permisos')}"></head>
+<body><nav th:replace="~{comun :: navegacion}"></nav>
+<main class="contenedor"><h1>Permisos editoriales</h1>
+    <section class="tarjeta">
+        <form method="get" th:action="@{/admin/DashBoardAdminCMSPanel/permisos}">
+            <label>Content Creator <select name="creador" required>
+                <option value="">Selecciona un usuario</option>
+                <option th:each="creador : ${creadores}" th:value="${creador.id}" th:text="${creador.nombre}"
+                        th:selected="${seleccionado != null and creador.id == seleccionado.id}"></option>
+            </select></label>
+            <button>Ver permisos</button>
+        </form>
+    </section>
+    <th:block th:if="${seleccionado}">
+        <section class="tarjeta"><h2>Edición por página</h2>
+            <table><thead><tr><th>Ruta</th><th>Acceso</th></tr></thead><tbody>
+            <tr th:each="pagina : ${paginas}"><td th:text="${pagina.ruta}"></td><td>
+                <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/permisos/edicion}">
+                    <input type="hidden" name="creador" th:value="${seleccionado.id}">
+                    <input type="hidden" name="pagina" th:value="${pagina.id}">
+                    <input type="hidden" name="conceder" th:value="${!asignadas.contains(pagina.id)}">
+                    <button th:text="${asignadas.contains(pagina.id) ? 'Revocar' : 'Conceder'}"></button>
+                </form>
+            </td></tr></tbody></table>
+        </section>
+        <section class="tarjeta"><h2>Creación por prefijo</h2>
+            <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/permisos/creacion}">
+                <input type="hidden" name="creador" th:value="${seleccionado.id}">
+                <input type="hidden" name="conceder" value="true">
+                <label>Prefijo <input name="prefijo" placeholder="/noticias" required></label>
+                <button>Conceder creación</button>
+            </form>
+            <ul><li th:each="prefijo : ${prefijos}">
+                <form method="post" class="acciones-inline" th:action="@{/admin/DashBoardAdminCMSPanel/permisos/creacion}">
+                    <span th:text="|${prefijo}/*|"></span>
+                    <input type="hidden" name="creador" th:value="${seleccionado.id}">
+                    <input type="hidden" name="prefijo" th:value="${prefijo}">
+                    <input type="hidden" name="conceder" value="false">
+                    <button class="secundario">Revocar</button>
+                </form>
+            </li></ul>
+        </section>
+    </th:block>
+</main></body></html>

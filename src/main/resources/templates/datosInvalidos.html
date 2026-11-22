@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{comun :: cabecera('Datos inválidos')}"></head>
+<body><main class="contenedor"><h1>Revisa los datos ingresados</h1>
+    <p role="alert" th:text="${mensaje}"></p><a th:href="@{/admin/DashBoardAdminCMSPanel}">Volver al panel</a>
+</main></body></html>

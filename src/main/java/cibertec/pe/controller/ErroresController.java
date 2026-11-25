@@ -1,5 +1,6 @@
 package cibertec.pe.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,8 +38,12 @@ public class ErroresController {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public String mostrarEstadoHttp(ResponseStatusException error, Model modelo) {
-        HttpStatus estado = HttpStatus.resolve(error.getStatusCode().value());
+    public String mostrarEstadoHttp(ResponseStatusException error,
+                                    HttpServletResponse respuesta,
+                                    Model modelo) {
+        int codigo = error.getStatusCode().value();
+        respuesta.setStatus(codigo);
+        HttpStatus estado = HttpStatus.resolve(codigo);
         String detalle = error.getReason();
         if (detalle == null || detalle.isBlank()) {
             detalle = estado == HttpStatus.NOT_FOUND

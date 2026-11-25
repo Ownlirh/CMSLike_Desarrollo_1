@@ -7,24 +7,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SitioImplement {
+public class SitioImplement implements ISitioService {
     private final IConfiguracionRepository configuraciones;
-    private final UsuarioImplement usuarios;
+    private final IUsuarioService usuarios;
     private final ContenidoImplement contenido;
-    private final AuditoriaImplement auditoria;
+    private final IAuditoriaService auditoria;
 
-    public SitioImplement(IConfiguracionRepository configuraciones, UsuarioImplement usuarios,
-                          ContenidoImplement contenido, AuditoriaImplement auditoria) {
+    public SitioImplement(IConfiguracionRepository configuraciones, IUsuarioService usuarios,
+                          ContenidoImplement contenido, IAuditoriaService auditoria) {
         this.configuraciones = configuraciones;
         this.usuarios = usuarios;
         this.contenido = contenido;
         this.auditoria = auditoria;
     }
 
+    @Override
     public Configuracion leerConfiguracion() {
         return configuraciones.findById(1L).orElseThrow();
     }
 
+    @Override
     @Transactional
     public void guardarConfiguracion(Usuario actor, String nombre, String logo, String color) {
         usuarios.exigirManager(actor);
@@ -32,7 +34,7 @@ public class SitioImplement {
                 || !logo.isBlank() && !contenido.enlaceValido(logo)) {
             throw new IllegalArgumentException("Revisa el nombre, el enlace del logo y el color.");
         }
-        Configuracion configuracion = leerConfiguracion();
+        Configuracion configuracion = configuraciones.bloquearConfiguracion();
         configuracion.setNombre(nombre.strip());
         configuracion.setLogo(logo.isBlank() ? null : logo);
         configuracion.setColor(color);

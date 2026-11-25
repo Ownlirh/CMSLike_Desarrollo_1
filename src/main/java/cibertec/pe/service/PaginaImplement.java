@@ -4,6 +4,8 @@ import cibertec.pe.model.*;
 import cibertec.pe.repository.IPaginaRepository;
 import cibertec.pe.repository.IRevisionRepository;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -13,17 +15,22 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
-public class PaginaImplement {
+public class PaginaImplement implements IPaginaService {
+    public record EnlaceNavegacion(String ruta, String titulo) {
+    }
+
     private final IPaginaRepository paginas;
     private final IRevisionRepository revisiones;
-    private final PermisoImplement permisos;
+    private final IPermisoService permisos;
     private final ContenidoImplement contenido;
-    private final AuditoriaImplement auditoria;
+    private final IAuditoriaService auditoria;
 
-    public PaginaImplement(IPaginaRepository paginas, IRevisionRepository revisiones, PermisoImplement permisos,
-                           ContenidoImplement contenido, AuditoriaImplement auditoria) {
+    public PaginaImplement(IPaginaRepository paginas, IRevisionRepository revisiones, IPermisoService permisos,
+                           ContenidoImplement contenido, IAuditoriaService auditoria) {
         this.paginas = paginas;
         this.revisiones = revisiones;
         this.permisos = permisos;
@@ -31,56 +38,111 @@ public class PaginaImplement {
         this.auditoria = auditoria;
     }
 
-    public List<Pagina> listarPaginas(Usuario actor) {
-        List<Pagina> lista = paginas.findAllByOrderByRutaAsc();
-        if (actor.getRol().puedeRevisar()) {
-            return lista;
+    public static String validarTitulo(String titulo) {
+        if (titulo == null || titulo.isBlank() || titulo.strip().length() > 160) {
+            throw new IllegalArgumentException("Ingresa un título de hasta 160 caracteres.");
         }
-        var asignadas = permisos.paginasAsignadas(actor);
-        return lista.stream().filter(pagina -> asignadas.contains(pagina.getId())).toList();
+        return titulo.strip();
     }
 
+    @Override
+    public List<Pagina> listarPaginas(Usuario actor, String filtro) {
+        List<Pagina> lista = actor.getRol().puedeRevisar()
+                ? paginas.findAllByOrderByRutaAsc()
+                : paginas.findByArchivadaFalseOrderByRutaAsc();
+        List<Pagina> visibles = actor.getRol().puedeRevisar()
+                ? lista
+                : lista.stream().filter(p -> permisos.paginasAsignadas(actor).contains(p.getId())).toList();
+
+        if (filtro == null || filtro.isBlank()) {
+            return visibles;
+        }
+        String termino = filtro.trim().toLowerCase();
+        return visibles.stream().filter(p -> {
+            boolean coincideRuta = p.getRuta().toLowerCase().contains(termino);
+            String tituloActual = obtenerTituloReferencia(p).toLowerCase();
+            return coincideRuta || tituloActual.contains(termino);
+        }).toList();
+    }
+
+    @Override
+    public String obtenerTituloReferencia(Pagina pagina) {
+        if (pagina.getPublicadaId() != null) {
+            return revisiones.findById(pagina.getPublicadaId())
+                    .map(Revision::getTitulo).orElse(pagina.getRuta());
+        }
+        return revisiones.findByPaginaIdOrderByIdDesc(pagina.getId(), PageRequest.of(0, 1))
+                .getContent().stream().findFirst().map(Revision::getTitulo).orElse(pagina.getRuta());
+    }
+
+    @Override
+    public List<EnlaceNavegacion> listarNavegacionPublica() {
+        return paginas.findByArchivadaFalseAndPublicadaIdIsNotNullOrderByRutaAsc().stream()
+                .map(p -> new EnlaceNavegacion(
+                        p.getRuta(),
+                        revisiones.findById(p.getPublicadaId()).map(Revision::getTitulo).orElse(p.getRuta())
+                ))
+                .toList();
+    }
+
+    @Override
+    public Set<String> rutasPublicadasActivas() {
+        return paginas.findByArchivadaFalseAndPublicadaIdIsNotNullOrderByRutaAsc().stream()
+                .map(Pagina::getRuta)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Pagina buscarPagina(Long id) {
-        return paginas.findById(id).orElseThrow(() -> noEncontrado());
+        return paginas.findById(id).filter(p -> !p.isArchivada()).orElseThrow(this::noEncontrado);
     }
 
+    @Override
     public Pagina editarPagina(Usuario actor, Long id) {
         Pagina pagina = buscarPagina(id);
         permisos.exigirEdicion(actor, pagina);
         return pagina;
     }
 
+    @Override
     public List<Pagina> listarPublicadas() {
-        return paginas.findByPublicadaIdIsNotNullOrderByRutaAsc();
+        return paginas.findByArchivadaFalseAndPublicadaIdIsNotNullOrderByRutaAsc();
     }
 
+    @Override
     public Revision buscarPublicada(String ruta) {
-        return paginas.findByRuta(ruta).map(Pagina::getPublicadaId)
-                .flatMap(revisiones::findById).orElseThrow(() -> noEncontrado());
+        return paginas.findByRutaAndArchivadaFalse(ruta).map(Pagina::getPublicadaId)
+                .flatMap(revisiones::findById).orElseThrow(this::noEncontrado);
     }
 
-    public List<Revision> listarHistorial(Usuario actor, Long id) {
+    @Override
+    public Page<Revision> listarHistorialPaginado(Usuario actor, Long id, int pagina, int tamano) {
         editarPagina(actor, id);
-        return revisiones.findByPaginaIdOrderByIdDesc(id);
+        int pageIndex = Math.max(0, pagina);
+        int pageSize = Math.min(Math.max(1, tamano), 50);
+        return revisiones.findByPaginaIdOrderByIdDesc(id, PageRequest.of(pageIndex, pageSize));
     }
 
+    @Override
     public List<Revision> listarPendientes(Usuario actor) {
         permisos.exigirRevisor(actor);
         return revisiones.findByEstadoOrderByIdAsc(EstadoRevision.EN_REVISION);
     }
 
+    @Override
     public Revision previsualizar(Usuario actor, Long id) {
         Revision revision = buscarRevision(id);
         editarPagina(actor, revision.getPaginaId());
         return revision;
     }
 
+    @Override
     public Revision buscarBaseEditor(Usuario actor, Long paginaId, Long revisionId) {
         Pagina pagina = editarPagina(actor, paginaId);
-        List<Revision> historial = revisiones.findByPaginaIdOrderByIdDesc(paginaId);
+        List<Revision> historial = revisiones.findByPaginaIdOrderByIdDesc(paginaId, PageRequest.of(0, 100)).getContent();
         if (revisionId != null) {
             return historial.stream().filter(revision -> revision.getId().equals(revisionId))
-                    .findFirst().orElseThrow(() -> noEncontrado());
+                    .findFirst().orElseThrow(this::noEncontrado);
         }
         return historial.stream().filter(revision -> revision.getAutorId().equals(actor.getId())
                         && revision.getEstado() != EstadoRevision.APROBADA
@@ -88,6 +150,7 @@ public class PaginaImplement {
                 .findFirst().orElseGet(() -> pagina.getPublicadaId() == null ? null : buscarRevision(pagina.getPublicadaId()));
     }
 
+    @Override
     @Transactional
     public Revision crearPagina(Usuario actor, String ruta, String titulo, String plantilla, String bloques) {
         RutasCms.validarRuta(ruta);
@@ -109,6 +172,7 @@ public class PaginaImplement {
         return guardarRevision(actor, pagina, null, titulo, plantilla, bloques);
     }
 
+    @Override
     @Transactional
     public Revision guardarBorrador(Usuario actor, Long paginaId, Long origenId,
                                     String titulo, String plantilla, String bloques) {
@@ -133,14 +197,12 @@ public class PaginaImplement {
 
     private Revision guardarRevision(Usuario actor, Pagina pagina, Long origenId,
                                      String titulo, String plantilla, String bloques) {
-        if (titulo == null || titulo.isBlank() || titulo.strip().length() > 160) {
-            throw new IllegalArgumentException("Ingresa un título de hasta 160 caracteres.");
-        }
+        String tituloLimpio = validarTitulo(titulo);
         Revision revision = new Revision();
         revision.setPaginaId(pagina.getId());
         revision.setAutorId(actor.getId());
         revision.setBaseId(pagina.getPublicadaId());
-        revision.setTitulo(titulo.strip());
+        revision.setTitulo(tituloLimpio);
         revision.setPlantilla(contenido.validarPlantilla(plantilla));
         revision.setBloques(contenido.guardarBloques(bloques));
         revision.setEstado(EstadoRevision.BORRADOR);
@@ -151,9 +213,10 @@ public class PaginaImplement {
         return revision;
     }
 
+    @Override
     @Transactional
     public Revision enviarRevision(Usuario actor, Long id) {
-        Pagina pagina = bloquearPagina(revisiones.buscarPaginaId(id).orElseThrow(() -> noEncontrado()));
+        Pagina pagina = bloquearPagina(revisiones.buscarPaginaId(id).orElseThrow(this::noEncontrado));
         permisos.exigirEdicion(actor, pagina);
         Revision revision = actualizarEstado(id);
         if (!actor.getRol().puedeRevisar() && !actor.getId().equals(revision.getAutorId())) {
@@ -169,10 +232,11 @@ public class PaginaImplement {
         return revision;
     }
 
+    @Override
     @Transactional
     public Revision aprobarRevision(Usuario actor, Long id) {
         permisos.exigirRevisor(actor);
-        Pagina pagina = bloquearPagina(revisiones.buscarPaginaId(id).orElseThrow(() -> noEncontrado()));
+        Pagina pagina = bloquearPagina(revisiones.buscarPaginaId(id).orElseThrow(this::noEncontrado));
         Revision revision = actualizarEstado(id);
         exigirEstado(revision, EstadoRevision.EN_REVISION);
         exigirBaseActual(pagina, revision);
@@ -183,13 +247,14 @@ public class PaginaImplement {
         return revision;
     }
 
+    @Override
     @Transactional
     public Revision devolverRevision(Usuario actor, Long id, String observacion) {
         permisos.exigirRevisor(actor);
         if (observacion == null || observacion.isBlank() || observacion.strip().length() > 500) {
             throw new IllegalArgumentException("Escribe una observación de hasta 500 caracteres.");
         }
-        Pagina pagina = bloquearPagina(revisiones.buscarPaginaId(id).orElseThrow(() -> noEncontrado()));
+        Pagina pagina = bloquearPagina(revisiones.buscarPaginaId(id).orElseThrow(this::noEncontrado));
         Revision revision = actualizarEstado(id);
         exigirEstado(revision, EstadoRevision.EN_REVISION);
         revision.setEstado(EstadoRevision.DEVUELTA);
@@ -198,16 +263,34 @@ public class PaginaImplement {
         return revision;
     }
 
+    @Override
+    @Transactional
+    public void archivarPagina(Usuario actor, Long id) {
+        permisos.exigirRevisor(actor);
+        Pagina pagina = bloquearPagina(id);
+        pagina.setArchivada(true);
+        auditoria.registrar(actor, pagina.getId(), null, "ARCHIVAR_PAGINA", pagina.getRuta());
+    }
+
+    @Override
+    @Transactional
+    public void desarchivarPagina(Usuario actor, Long id) {
+        permisos.exigirRevisor(actor);
+        Pagina pagina = paginas.bloquearPagina(id).orElseThrow(this::noEncontrado);
+        pagina.setArchivada(false);
+        auditoria.registrar(actor, pagina.getId(), null, "DESARCHIVAR_PAGINA", pagina.getRuta());
+    }
+
     private Revision buscarRevision(Long id) {
-        return revisiones.findById(id).orElseThrow(() -> noEncontrado());
+        return revisiones.findById(id).orElseThrow(this::noEncontrado);
     }
 
     private Revision actualizarEstado(Long id) {
-        return revisiones.bloquearRevision(id).orElseThrow(() -> noEncontrado());
+        return revisiones.bloquearRevision(id).orElseThrow(this::noEncontrado);
     }
 
     private Pagina bloquearPagina(Long id) {
-        return paginas.bloquearPagina(id).orElseThrow(() -> noEncontrado());
+        return paginas.bloquearPagina(id).filter(p -> !p.isArchivada()).orElseThrow(this::noEncontrado);
     }
 
     private void exigirEstado(Revision revision, EstadoRevision estado) {

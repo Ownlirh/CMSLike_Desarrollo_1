@@ -1,6 +1,8 @@
 package cibertec.pe.repository;
 
 import cibertec.pe.model.Revision;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
@@ -12,9 +14,10 @@ import java.util.Optional;
 import cibertec.pe.model.EstadoRevision;
 
 public interface IRevisionRepository extends JpaRepository<Revision, Long> {
-    List<Revision> findByPaginaIdOrderByIdDesc(Long paginaId);
+    Page<Revision> findByPaginaIdOrderByIdDesc(Long paginaId, Pageable pageable);
     List<Revision> findByEstadoOrderByIdAsc(EstadoRevision estado);
     boolean existsByPaginaIdAndEstado(Long paginaId, EstadoRevision estado);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Revision r where r.id = :id")
     Optional<Revision> bloquearRevision(@Param("id") Long id);

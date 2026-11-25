@@ -11,20 +11,20 @@
 <header class="barra publica">
     <a class="marca" th:href="@{/}"><img th:if="${sitio.logo}" th:src="${sitio.logo}" alt="" referrerpolicy="no-referrer">
         <span th:text="${sitio.nombre}"></span></a>
-    <a th:each="pagina : ${navegacion}" th:href="${pagina.ruta}" th:text="${pagina.ruta.substring(1)}"></a>
+    <a th:each="enlace : ${navegacion}" th:href="${enlace.ruta}" th:text="${enlace.titulo}"></a>
 </header>
 <div class="preview-bar" th:if="${preview}">
     <span>Vista previa de la revisión <strong th:text="${revision.id}"></strong></span>
-    <div class="acciones-inline"><button id="alternarVista" type="button" aria-pressed="false">Simular móvil</button>
-        <a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${revision.paginaId})}">Volver al historial</a></div>
+    <div class="acciones-inline"><button class="boton secundario" id="alternarVista" type="button" aria-pressed="false">Simular móvil</button>
+        <a class="boton secundario" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${revision.paginaId})}">Volver al historial</a></div>
 </div>
 <section class="preview-decision" th:if="${puedeDecidir}" aria-label="Decisión de revisión">
     <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/aprobar(id=${revision.id})}">
-        <button>Aprobar y publicar</button>
+        <button class="boton">Aprobar y publicar</button>
     </form>
     <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/devolver(id=${revision.id})}">
         <label>Observación <textarea name="observacion" maxlength="500" required></textarea></label>
-        <button class="secundario">Devolver</button>
+        <button class="boton secundario">Devolver</button>
     </form>
 </section>
 <main class="contenido" th:classappend="${revision != null and revision.plantilla == 'amplia'} ? 'amplia'">
@@ -51,14 +51,28 @@
                     <li th:each="elemento : ${bloque.elementosLista()}" th:text="${elemento}"></li>
                 </ul>
                 <p th:unless="${bloque.estilo == 'lista'}" class="texto" th:text="${bloque.texto}"></p>
-                <a th:unless="${#strings.isEmpty(bloque.url)}" th:href="${bloque.url}">Más información</a>
+                <a class="boton secundario" th:unless="${#strings.isEmpty(bloque.url)}" th:href="${bloque.url}">Más información</a>
             </div>
-            <a th:case="'BOTON'" class="boton" th:classappend="${bloque.estilo}" th:href="${bloque.url}" th:text="${bloque.titulo}"></a>
+            <a th:case="'BOTON'" class="boton secundario" th:href="${bloque.url}" th:text="${bloque.titulo}"></a>
         </section>
     </th:block>
-    <section th:if="${revision == null}"><h1 th:text="${sitio.nombre}"></h1>
+    <section th:if="${revision == null}">
+        <h1 th:text="${sitio.nombre}"></h1>
         <p th:if="${#lists.isEmpty(navegacion)}">Todavía no hay páginas publicadas.</p>
-        <a th:href="@{/admin/DashBoardAdminCMSPanel}">Ingresar al panel</a>
     </section>
 </main>
-</body></html>
+<footer class="pie-sitio" th:unless="${preview}">
+    <div class="pie-sitio-interno">
+        <span class="pie-sitio-marca" th:text="${sitio.nombre}">CMS</span>
+        <div class="acciones-pie">
+            <a class="boton" th:href="@{/admin/DashBoardAdminCMSPanel}">Ingresar al panel</a>
+            <a class="boton secundario" th:unless="${autenticado}" th:href="@{/admin/ingresar(volver='/')}">Ingresar</a>
+            <a class="boton suave" th:unless="${autenticado}" th:href="@{/admin/registro}">Registrarse</a>
+            <form th:if="${autenticado}" method="post" th:action="@{/admin/salir}">
+                <button class="boton secundario">Cerrar sesión</button>
+            </form>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

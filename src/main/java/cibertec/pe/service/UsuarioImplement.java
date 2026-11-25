@@ -2,8 +2,8 @@ package cibertec.pe.service;
 
 import cibertec.pe.model.Rol;
 import cibertec.pe.model.Usuario;
-import cibertec.pe.repository.IUsuarioRepository;
 import cibertec.pe.repository.IConfiguracionRepository;
+import cibertec.pe.repository.IUsuarioRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,13 +14,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
-public class UsuarioImplement {
+public class UsuarioImplement implements IUsuarioService {
     private final IUsuarioRepository usuarios;
     private final PasswordEncoder claves;
-    private final AuditoriaImplement auditoria;
+    private final IAuditoriaService auditoria;
     private final IConfiguracionRepository configuraciones;
 
-    public UsuarioImplement(IUsuarioRepository usuarios, PasswordEncoder claves, AuditoriaImplement auditoria,
+    public UsuarioImplement(IUsuarioRepository usuarios, PasswordEncoder claves, IAuditoriaService auditoria,
                             IConfiguracionRepository configuraciones) {
         this.usuarios = usuarios;
         this.claves = claves;
@@ -28,22 +28,26 @@ public class UsuarioImplement {
         this.configuraciones = configuraciones;
     }
 
+    @Override
     public Usuario buscarUsuario(String nombre) {
         return usuarios.findByNombre(nombre).filter(Usuario::isActivo)
                 .orElseThrow(() -> new AccessDeniedException("Usuario sin acceso"));
     }
 
+    @Override
     public void exigirManager(Usuario actor) {
         if (actor.getRol() != Rol.MANAGER) {
             throw new AccessDeniedException("Se requiere el rol Manager");
         }
     }
 
+    @Override
     public List<Usuario> listarUsuarios(Usuario actor) {
         exigirManager(actor);
         return usuarios.findAll();
     }
 
+    @Override
     public List<Usuario> listarCreadores(Usuario actor) {
         if (!actor.getRol().puedeRevisar()) {
             throw new AccessDeniedException("Se requiere un rol de revisión");
@@ -51,6 +55,7 @@ public class UsuarioImplement {
         return usuarios.findByRolOrderByNombreAsc(Rol.CONTENT_CREATOR);
     }
 
+    @Override
     @Transactional
     public Usuario registrarUsuario(Usuario actor, String nombre, String clave, Rol rol) {
         exigirManager(actor);
@@ -59,6 +64,13 @@ public class UsuarioImplement {
         return nuevo;
     }
 
+    @Override
+    @Transactional
+    public Usuario registrarPublico(String nombre, String clave) {
+        return guardarUsuario(nombre, clave, Rol.CONTENT_CREATOR);
+    }
+
+    @Override
     @Transactional
     public void actualizarUsuario(Usuario actor, Long id, Rol rol, boolean activo, String clave) {
         configuraciones.bloquearConfiguracion();
@@ -80,6 +92,7 @@ public class UsuarioImplement {
         auditoria.registrar(actor, null, null, "ACTUALIZAR_USUARIO", usuario.getNombre());
     }
 
+    @Override
     @Transactional
     public void iniciarManager(String nombre, String clave) {
         if (!nombre.isBlank() && !clave.isBlank() && usuarios.count() == 0) {
@@ -105,6 +118,7 @@ public class UsuarioImplement {
             throw new IllegalArgumentException("El usuario ya existe.");
         }
     }
+
     private void validarClave(String clave) {
         if (clave.length() < 12 || clave.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new IllegalArgumentException("Usa al menos 12 caracteres y hasta 72 bytes en la contraseña.");

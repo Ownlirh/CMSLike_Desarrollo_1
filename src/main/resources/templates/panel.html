@@ -4,21 +4,40 @@
 <body>
 <nav th:replace="~{comun :: navegacion}"></nav>
 <main class="contenedor">
+    <p th:replace="~{comun :: mensaje}"></p>
     <header class="acciones">
         <div><h1>Páginas</h1><p th:text="|${actor.nombre} · ${actor.rol.etiqueta}|"></p></div>
         <a class="boton" th:if="${puedeCrear}" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/nueva}">Nueva página</a>
     </header>
     <section class="tarjeta">
-        <p th:if="${#lists.isEmpty(paginas)}">Todavía no tienes páginas para editar.</p>
+        <form method="get" th:action="@{/admin/DashBoardAdminCMSPanel}" class="acciones-inline">
+            <input name="buscar" th:value="${buscar}" placeholder="Buscar por ruta o título...">
+            <button class="boton">Buscar</button>
+            <a class="boton secundario" th:if="${buscar != ''}" th:href="@{/admin/DashBoardAdminCMSPanel}">Limpiar</a>
+        </form>
+    </section>
+    <section class="tarjeta">
+        <p th:if="${#lists.isEmpty(paginas)}">No se encontraron páginas.</p>
         <table th:unless="${#lists.isEmpty(paginas)}">
             <thead><tr><th>Ruta</th><th>Publicación</th><th>Acciones</th></tr></thead>
             <tbody><tr th:each="pagina : ${paginas}">
                 <td th:text="${pagina.ruta}"></td>
-                <td th:text="${pagina.publicadaId == null ? 'Sin publicar' : 'Publicada'}"></td>
-                <td><a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${pagina.id})}">Historial</a>
-                    <a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id})}">Editar</a></td>
+                <td th:text="${pagina.archivada ? 'Archivada' : (pagina.publicadaId == null ? 'Sin publicar' : 'Publicada')}"></td>
+                <td class="acciones-inline">
+                    <a class="boton secundario" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${pagina.id})}">Historial</a>
+                    <a class="boton secundario" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id})}">Editar</a>
+                    <form th:if="${puedeArchivar and !pagina.archivada}" method="post"
+                          th:action="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/archivar(id=${pagina.id})}">
+                        <button class="boton suave">Archivar</button>
+                    </form>
+                    <form th:if="${puedeArchivar and pagina.archivada}" method="post"
+                          th:action="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/desarchivar(id=${pagina.id})}">
+                        <button class="boton">Desarchivar</button>
+                    </form>
+                </td>
             </tr></tbody>
         </table>
     </section>
 </main>
-</body></html>
+</body>
+</html>

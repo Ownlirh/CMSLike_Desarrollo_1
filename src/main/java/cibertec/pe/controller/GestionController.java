@@ -4,24 +4,30 @@ import cibertec.pe.config.SeguridadConfig;
 import cibertec.pe.model.Rol;
 import cibertec.pe.model.Usuario;
 import cibertec.pe.service.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping(SeguridadConfig.PANEL)
 public class GestionController {
-    private final UsuarioImplement usuarios;
-    private final PaginaImplement paginas;
-    private final PermisoImplement permisos;
-    private final AuditoriaImplement auditoria;
-    private final SitioImplement sitio;
+    private final IUsuarioService usuarios;
+    private final IPaginaService paginas;
+    private final IPermisoService permisos;
+    private final IAuditoriaService auditoria;
+    private final ISitioService sitio;
 
-    public GestionController(UsuarioImplement usuarios, PaginaImplement paginas, PermisoImplement permisos,
-                             AuditoriaImplement auditoria, SitioImplement sitio) {
+    public GestionController(IUsuarioService usuarios, IPaginaService paginas, IPermisoService permisos,
+                             IAuditoriaService auditoria, ISitioService sitio) {
         this.usuarios = usuarios;
         this.paginas = paginas;
         this.permisos = permisos;
@@ -43,8 +49,8 @@ public class GestionController {
 
     @PostMapping("/usuarios")
     public String registrarUsuario(@ModelAttribute(value = "actor", binding = false) Usuario actor,
-                                  @RequestParam String nombre, @RequestParam String clave, @RequestParam Rol rol,
-                                  RedirectAttributes redireccion) {
+                                   @RequestParam String nombre, @RequestParam String clave, @RequestParam Rol rol,
+                                   RedirectAttributes redireccion) {
         usuarios.registrarUsuario(actor, nombre, clave, rol);
         redireccion.addFlashAttribute("mensaje", "Usuario registrado.");
         return volver("/usuarios");
@@ -62,9 +68,9 @@ public class GestionController {
 
     @GetMapping("/permisos")
     public String mostrarPermisos(@ModelAttribute(value = "actor", binding = false) Usuario actor,
-                                 @RequestParam(required = false) Long creador, Model modelo) {
+                                  @RequestParam(required = false) Long creador, Model modelo) {
         permisos.exigirRevisor(actor);
-        modelo.addAttribute("paginas", paginas.listarPaginas(actor));
+        modelo.addAttribute("paginas", paginas.listarPaginas(actor, null));
         modelo.addAttribute("creadores", usuarios.listarCreadores(actor));
         if (creador != null) {
             Usuario seleccionado = permisos.buscarCreador(creador);
@@ -77,8 +83,8 @@ public class GestionController {
 
     @PostMapping("/permisos/edicion")
     public String cambiarEdicion(@ModelAttribute(value = "actor", binding = false) Usuario actor,
-                                @RequestParam Long creador, @RequestParam Long pagina, @RequestParam boolean conceder,
-                                RedirectAttributes redireccion) {
+                                 @RequestParam Long creador, @RequestParam Long pagina, @RequestParam boolean conceder,
+                                 RedirectAttributes redireccion) {
         permisos.exigirRevisor(actor);
         paginas.buscarPagina(pagina);
         permisos.cambiarEdicion(actor, creador, pagina, conceder);
@@ -88,16 +94,39 @@ public class GestionController {
 
     @PostMapping("/permisos/creacion")
     public String cambiarCreacion(@ModelAttribute(value = "actor", binding = false) Usuario actor,
-                                 @RequestParam Long creador, @RequestParam String prefijo, @RequestParam boolean conceder,
-                                 RedirectAttributes redireccion) {
+                                  @RequestParam Long creador, @RequestParam String prefijo, @RequestParam boolean conceder,
+                                  RedirectAttributes redireccion) {
         permisos.cambiarCreacion(actor, creador, prefijo, conceder);
         redireccion.addAttribute("creador", creador);
         return volver("/permisos");
     }
 
     @GetMapping("/auditoria")
-    public String mostrarAuditoria(@ModelAttribute(value = "actor", binding = false) Usuario actor, Model modelo) {
-        modelo.addAttribute("eventos", auditoria.listarEventos(actor));
+    public String mostrarAuditoria(@ModelAttribute(value = "actor", binding = false) Usuario actor,
+                                   @RequestParam(required = false) String accion,
+                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+                                   Model modelo) {
+        Instant desde = fechaDesde == null ? null : fechaDesde.atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant hasta = fechaHasta == null ? null : fechaHasta.plusDays(1).atStartOfDay().minusNanos(1).toInstant(ZoneOffset.UTC);
+
+        Map<Long, String> nombresUsuarios = new HashMap<>();
+        if (actor.getRol() == Rol.MANAGER) {
+            for (Usuario u : usuarios.listarUsuarios(actor)) {
+                nombresUsuarios.put(u.getId(), u.getNombre());
+            }
+        } else {
+            nombresUsuarios.put(actor.getId(), actor.getNombre());
+            for (Usuario u : usuarios.listarCreadores(actor)) {
+                nombresUsuarios.put(u.getId(), u.getNombre());
+            }
+        }
+
+        modelo.addAttribute("eventos", auditoria.listarEventos(actor, accion, desde, hasta));
+        modelo.addAttribute("nombresUsuarios", nombresUsuarios);
+        modelo.addAttribute("accion", accion == null ? "" : accion);
+        modelo.addAttribute("fechaDesde", fechaDesde);
+        modelo.addAttribute("fechaHasta", fechaHasta);
         return "auditoria";
     }
 
@@ -110,8 +139,8 @@ public class GestionController {
 
     @PostMapping("/configuracion")
     public String guardarConfiguracion(@ModelAttribute(value = "actor", binding = false) Usuario actor,
-                                      @RequestParam String nombre, @RequestParam String logo, @RequestParam String color,
-                                      RedirectAttributes redireccion) {
+                                       @RequestParam String nombre, @RequestParam String logo, @RequestParam String color,
+                                       RedirectAttributes redireccion) {
         sitio.guardarConfiguracion(actor, nombre, logo, color);
         redireccion.addFlashAttribute("mensaje", "Configuración guardada.");
         return volver("/configuracion");

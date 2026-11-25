@@ -21,4 +21,7 @@ public class Pagina {
 
     @Column(name = "publicada_id")
     private Long publicadaId;
+
+    @Column(nullable = false)
+    private boolean archivada = false;
 }

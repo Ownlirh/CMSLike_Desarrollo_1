@@ -6,7 +6,7 @@
 <main class="contenedor">
     <header class="acciones">
         <div><h1 th:text="${pagina.ruta}"></h1>
-            <a th:if="${pagina.publicadaId != null}" th:href="${pagina.ruta}">Abrir página publicada</a></div>
+            <a class="boton secundario" th:if="${pagina.publicadaId != null}" th:href="${pagina.ruta}">Abrir página publicada</a></div>
         <a class="boton" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id},revision=${pagina.publicadaId})}">Nuevo borrador</a>
     </header>
     <p th:replace="~{comun :: mensaje}"></p>
@@ -19,15 +19,23 @@
                 <td><span th:text="${revision.id == pagina.publicadaId ? 'PUBLICADA' : revision.estado}"></span>
                     <small th:if="${revision.observacion}" th:text="${revision.observacion}"></small></td>
                 <td class="acciones-inline">
-                    <a th:href="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/preview(id=${revision.id})}">Vista previa</a>
-                    <a th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id},revision=${revision.id})}">Editar copia</a>
+                    <a class="boton secundario" th:href="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/preview(id=${revision.id})}">Vista previa</a>
+                    <a class="boton secundario" th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}/editar(id=${pagina.id},revision=${revision.id})}">Editar copia</a>
                     <form th:if="${revision.estado.name() == 'BORRADOR' and (actor.rol.puedeRevisar() or actor.id == revision.autorId)}"
                           method="post" th:action="@{/admin/DashBoardAdminCMSPanel/revisiones/{id}/enviar(id=${revision.id})}">
-                        <button>Enviar a revisión</button>
+                        <button class="boton">Enviar a revisión</button>
                     </form>
                 </td>
             </tr></tbody>
         </table>
+        <div class="acciones" th:if="${historialPage.totalPages > 1}">
+            <a class="boton secundario" th:if="${historialPage.hasPrevious()}"
+               th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${pagina.id},page=${historialPage.number - 1},size=${historialPage.size})}">Anterior</a>
+            <span th:text="|Página ${historialPage.number + 1} de ${historialPage.totalPages}|"></span>
+            <a class="boton secundario" th:if="${historialPage.hasNext()}"
+               th:href="@{/admin/DashBoardAdminCMSPanel/paginas/{id}(id=${pagina.id},page=${historialPage.number + 1},size=${historialPage.size})}">Siguiente</a>
+        </div>
     </section>
 </main>
-</body></html>
+</body>
+</html>

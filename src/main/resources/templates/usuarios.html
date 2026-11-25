@@ -12,7 +12,7 @@
                 <label>Contraseña <input name="clave" type="password" minlength="12" autocomplete="new-password" required></label>
                 <label>Rol <select name="rol"><option th:each="rol : ${roles}" th:value="${rol.name()}" th:text="${rol.etiqueta}"></option></select></label>
             </div>
-            <button>Registrar usuario</button>
+            <button class="boton">Registrar usuario</button>
         </form>
     </section>
     <section class="tarjeta">
@@ -20,7 +20,7 @@
         <table><thead><tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead>
             <tbody><tr th:each="usuario : ${usuarios}"><td th:text="${usuario.nombre}"></td>
                 <td th:text="${usuario.rol.etiqueta}"></td>
-                <td><details><summary>Editar cuenta</summary>
+                <td><details><summary class="boton secundario">Editar cuenta</summary>
                     <form method="post" th:action="@{/admin/DashBoardAdminCMSPanel/usuarios/{id}(id=${usuario.id})}">
                         <label>Rol <select name="rol">
                             <option th:each="rol : ${roles}" th:value="${rol.name()}" th:text="${rol.etiqueta}"
@@ -31,7 +31,7 @@
                             <option value="false" th:selected="${!usuario.activo}">Inactivo</option>
                         </select></label>
                         <label>Nueva contraseña <input type="password" name="clave" minlength="12" autocomplete="new-password"></label>
-                        <button>Actualizar</button>
+                        <button class="boton">Actualizar</button>
                     </form>
                 </details></td></tr></tbody></table>
     </section>

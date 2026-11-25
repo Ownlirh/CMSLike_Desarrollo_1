@@ -4,13 +4,25 @@
 <body><nav th:replace="~{comun :: navegacion}"></nav>
 <main class="contenedor"><h1>Auditoría</h1>
     <section class="tarjeta">
+        <form method="get" th:action="@{/admin/DashBoardAdminCMSPanel/auditoria}" class="acciones-inline">
+            <label>Acción <input name="accion" th:value="${accion}" placeholder="Ej. APROBAR_REVISION"></label>
+            <label>Desde <input type="date" name="fechaDesde" th:value="${fechaDesde}"></label>
+            <label>Hasta <input type="date" name="fechaHasta" th:value="${fechaHasta}"></label>
+            <button class="boton">Filtrar</button>
+            <a class="boton secundario" th:href="@{/admin/DashBoardAdminCMSPanel/auditoria}">Limpiar</a>
+        </form>
+    </section>
+    <section class="tarjeta">
         <p th:if="${#lists.isEmpty(eventos)}">Todavía no hay eventos.</p>
         <table th:unless="${#lists.isEmpty(eventos)}">
             <thead><tr><th>Fecha UTC</th><th>Acción</th><th>Actor</th><th>Página</th><th>Revisión</th><th>Detalle</th></tr></thead>
             <tbody><tr th:each="evento : ${eventos}">
-                <td th:text="${evento.fecha}"></td><td th:text="${evento.accion}"></td>
-                <td th:text="${evento.actorId}"></td><td th:text="${evento.paginaId}"></td>
-                <td th:text="${evento.revisionId}"></td><td th:text="${evento.detalle}"></td>
+                <td th:text="${evento.fecha}"></td>
+                <td th:text="${evento.accion}"></td>
+                <td th:text="${nombresUsuarios[evento.actorId] != null ? nombresUsuarios[evento.actorId] : evento.actorId}"></td>
+                <td th:text="${evento.paginaId}"></td>
+                <td th:text="${evento.revisionId}"></td>
+                <td th:text="${evento.detalle}"></td>
             </tr></tbody>
         </table>
     </section>

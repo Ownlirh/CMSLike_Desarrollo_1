@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Registrarse · CMS</title><link rel="stylesheet" th:href="@{/css/cms.css}"></head>
+<body class="acceso"><main class="tarjeta">
+    <h1>Crear cuenta</h1>
+    <p class="error" th:if="${error}" th:text="${error}"></p>
+    <form method="post" th:action="@{/admin/registro}">
+        <label>Usuario <input name="nombre" th:value="${nombre}" pattern="[a-zA-Z0-9._\-]{3,100}" required></label>
+        <label>Contraseña <input name="clave" type="password" minlength="12" autocomplete="new-password" required></label>
+        <label>Confirmar contraseña <input name="confirmarClave" type="password" minlength="12" autocomplete="new-password" required></label>
+        <button class="boton">Registrarse</button>
+    </form>
+    <div class="acciones-inline" style="margin-top: 1rem;">
+        <a class="boton secundario" th:href="@{/admin/ingresar}">Ya tengo cuenta</a>
+        <a class="boton suave" href="/">Volver al sitio</a>
+    </div>
+</main></body></html>

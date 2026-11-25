@@ -1,14 +1,19 @@
 <!doctype html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ingresar · CMS</title><link rel="stylesheet" th:href="@{/css/cms.css}"></head>
+    <title>Ingresar · CMS</title><link rel="stylesheet" th:href="@{/css/cms.css}"></head>
 <body class="acceso"><main class="tarjeta">
     <h1>Ingresar al CMS</h1>
+    <p class="aviso" th:if="${registrado}">Cuenta creada. Ya puedes iniciar sesión.</p>
     <p class="error" th:if="${param.error}">Usuario o contraseña incorrectos.</p>
     <form method="post" th:action="@{/admin/ingresar}">
+        <input type="hidden" name="volver" th:if="${volver != null and !volver.isEmpty()}" th:value="${volver}">
         <label>Usuario <input name="username" autocomplete="username" required></label>
         <label>Contraseña <input type="password" name="password" autocomplete="current-password" required></label>
-        <button>Ingresar</button>
+        <button class="boton">Ingresar</button>
     </form>
-    <a href="/">Volver al sitio</a>
+    <div class="acciones-inline" style="margin-top: 1rem;">
+        <a class="boton secundario" th:href="@{/admin/registro}">Registrarse</a>
+        <a class="boton suave" href="/">Volver al sitio</a>
+    </div>
 </main></body></html>

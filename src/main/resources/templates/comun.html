@@ -19,7 +19,7 @@
         <a th:href="@{/admin/DashBoardAdminCMSPanel/configuracion}">Apariencia</a>
     </th:block>
     <a class="espacio" th:href="@{/}">Ver sitio</a>
-    <form method="post" th:action="@{/admin/salir}"><button class="secundario">Salir</button></form>
+    <form method="post" th:action="@{/admin/salir}"><button class="boton secundario">Cerrar sesión</button></form>
 </nav>
 <p class="aviso" role="status" th:fragment="mensaje" th:if="${mensaje}" th:text="${mensaje}"></p>
 </body>

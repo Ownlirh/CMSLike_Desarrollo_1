@@ -11,15 +11,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class PermisoImplement {
+public class PermisoImplement implements IPermisoService {
     private final IPermisoPaginaRepository accesoPaginas;
     private final IPermisoCreacionRepository accesoRutas;
     private final IUsuarioRepository usuarios;
     private final IPaginaRepository paginas;
-    private final AuditoriaImplement auditoria;
+    private final IAuditoriaService auditoria;
 
     public PermisoImplement(IPermisoPaginaRepository accesoPaginas, IPermisoCreacionRepository accesoRutas,
-                            IUsuarioRepository usuarios, IPaginaRepository paginas, AuditoriaImplement auditoria) {
+                            IUsuarioRepository usuarios, IPaginaRepository paginas, IAuditoriaService auditoria) {
         this.accesoPaginas = accesoPaginas;
         this.accesoRutas = accesoRutas;
         this.usuarios = usuarios;
@@ -27,17 +27,20 @@ public class PermisoImplement {
         this.auditoria = auditoria;
     }
 
+    @Override
     public void exigirRevisor(Usuario actor) {
         if (!actor.getRol().puedeRevisar()) {
             throw new AccessDeniedException("Se requiere un rol de revisión");
         }
     }
 
+    @Override
     public Set<Long> paginasAsignadas(Usuario actor) {
         return accesoPaginas.findByUsuarioId(actor.getId()).stream()
                 .map(PermisoPagina::getPaginaId).collect(Collectors.toSet());
     }
 
+    @Override
     public void exigirEdicion(Usuario actor, Pagina pagina) {
         if (!actor.getRol().puedeRevisar()
                 && accesoPaginas.findByUsuarioIdAndPaginaId(actor.getId(), pagina.getId()).isEmpty()) {
@@ -45,10 +48,12 @@ public class PermisoImplement {
         }
     }
 
+    @Override
     public boolean puedeCrear(Usuario actor) {
         return actor.getRol().puedeRevisar() || !accesoRutas.findByUsuarioId(actor.getId()).isEmpty();
     }
 
+    @Override
     public void exigirCreacion(Usuario actor, String ruta) {
         if (actor.getRol().puedeRevisar()) {
             return;
@@ -57,6 +62,7 @@ public class PermisoImplement {
         verificarCreacion(actor, ruta);
     }
 
+    @Override
     public void verificarCreacion(Usuario actor, String ruta) {
         if (!actor.getRol().puedeRevisar() && accesoRutas.findByUsuarioId(actor.getId()).stream()
                 .noneMatch(permiso -> RutasCms.perteneceAPrefijo(ruta, permiso.getPrefijo()))) {
@@ -64,14 +70,20 @@ public class PermisoImplement {
         }
     }
 
+    @Override
     @Transactional
     public void cambiarEdicion(Usuario actor, Long usuarioId, Long paginaId, boolean conceder) {
         exigirRevisor(actor);
-        paginas.bloquearPagina(paginaId).orElseThrow(() -> new IllegalArgumentException("La página no existe."));
+        Pagina pagina = paginas.bloquearPagina(paginaId)
+                .orElseThrow(() -> new IllegalArgumentException("La página no existe."));
+        if (conceder && pagina.isArchivada()) {
+            throw new IllegalArgumentException("Desarchiva la página antes de conceder edición.");
+        }
         Usuario creador = buscarCreador(usuarioId);
         cambiarAccesoPagina(actor, creador, paginaId, conceder);
     }
 
+    @Override
     public void asignarPaginaNueva(Usuario actor, Pagina pagina) {
         if (actor.getRol() == Rol.CONTENT_CREATOR) {
             cambiarAccesoPagina(actor, actor, pagina.getId(), true);
@@ -93,6 +105,7 @@ public class PermisoImplement {
         auditoria.registrar(actor, paginaId, null, conceder ? "CONCEDER_EDICION" : "REVOCAR_EDICION", creador.getNombre());
     }
 
+    @Override
     @Transactional
     public void cambiarCreacion(Usuario actor, Long usuarioId, String prefijo, boolean conceder) {
         exigirRevisor(actor);
@@ -113,6 +126,7 @@ public class PermisoImplement {
                 creador.getNombre() + " " + prefijo);
     }
 
+    @Override
     public List<String> listarPrefijos(Usuario creador) {
         return accesoRutas.findByUsuarioId(creador.getId()).stream().map(PermisoCreacion::getPrefijo).sorted().toList();
     }
@@ -122,6 +136,7 @@ public class PermisoImplement {
                 .orElseThrow(() -> new IllegalArgumentException("Selecciona un Content Creator."));
     }
 
+    @Override
     public Usuario buscarCreador(Long id) {
         return usuarios.findById(id).filter(usuario -> usuario.getRol() == Rol.CONTENT_CREATOR)
                 .orElseThrow(() -> new IllegalArgumentException("Selecciona un Content Creator."));

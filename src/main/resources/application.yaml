@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/cms}
     username: ${DB_USER:cms}
-    password: ${DB_PASSWORD:}
+    password: ${DB_PASSWORD:DiegoGantu}
   jpa:
     open-in-view: false
     hibernate:

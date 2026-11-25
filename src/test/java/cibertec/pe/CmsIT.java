@@ -87,7 +87,7 @@ class CmsIT {
             mvc.perform(get(PANEL + ruta).with(user("manager"))).andExpect(status().isOk());
         }
         mvc.perform(post(PANEL + "/configuracion").with(user("manager"))
-                .param("nombre", "Portal").param("logo", "").param("color", "#123456"))
+                        .param("nombre", "Portal").param("logo", "").param("color", "#123456"))
                 .andExpect(status().isForbidden());
     }
 
@@ -103,17 +103,17 @@ class CmsIT {
                 .param("plantilla", "normal").param("bloques", BLOQUES)).andExpect(status().isForbidden());
 
         String historial = mvc.perform(post(PANEL + "/paginas").with(user(creador.getNombre())).with(csrf())
-                .param("ruta", "/noticias/evento").param("titulo", "Evento en borrador")
-                .param("plantilla", "amplia").param("bloques", BLOQUES))
+                        .param("ruta", "/noticias/evento").param("titulo", "Evento en borrador")
+                        .param("plantilla", "amplia").param("bloques", BLOQUES))
                 .andExpect(status().is3xxRedirection()).andReturn().getResponse().getRedirectedUrl();
         Long paginaId = Long.valueOf(historial.substring(historial.lastIndexOf('/') + 1));
-        Revision revision = paginas.listarHistorial(creador, paginaId).getFirst();
+        Revision revision = paginas.listarHistorialPaginado(creador, paginaId, 0, 50).getContent().getFirst();
         String revisar = PANEL + "/revisiones/" + revision.getId();
 
         mvc.perform(get("/noticias/evento")).andExpect(status().isNotFound());
         mvc.perform(post(PANEL + "/editor/preview").with(user(creador.getNombre())).with(csrf())
-                .param("paginaId", paginaId.toString()).param("titulo", "Vista antes de guardar")
-                .param("plantilla", "amplia").param("bloques", BLOQUES))
+                        .param("paginaId", paginaId.toString()).param("titulo", "Vista antes de guardar")
+                        .param("plantilla", "amplia").param("bloques", BLOQUES))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("Vista antes de guardar")));
         mvc.perform(post(PANEL + "/editor/preview").with(user(externo.getNombre())).with(csrf())
                 .param("paginaId", paginaId.toString()).param("titulo", "Vista ajena")
@@ -167,7 +167,7 @@ class CmsIT {
         mvc.perform(post(cambiar).with(user(cuenta.getNombre())).with(csrf())
                 .param("rol", "MANAGER").param("activo", "true").param("clave", "")).andExpect(status().isForbidden());
         mvc.perform(post(cambiar).with(user("manager")).with(csrf())
-                .param("rol", "CONTENT_CREATOR_MANAGER").param("activo", "true").param("clave", ""))
+                        .param("rol", "CONTENT_CREATOR_MANAGER").param("activo", "true").param("clave", ""))
                 .andExpect(status().is3xxRedirection());
         mvc.perform(get(PANEL + "/revisiones").with(user(cuenta.getNombre()))).andExpect(status().isOk());
         usuarios.actualizarUsuario(manager, cuenta.getId(), Rol.CONTENT_CREATOR_MANAGER, false, "");
@@ -204,7 +204,7 @@ class CmsIT {
         assertThrows(IllegalArgumentException.class,
                 () -> paginas.crearPagina(manager, "/ruta-revertida", "Prueba", "normal", "[] NO"));
         assertEquals(antes, eventos.count());
-        assertTrue(paginas.listarPaginas(manager).stream().noneMatch(pagina -> pagina.getRuta().equals("/ruta-revertida")));
+        assertTrue(paginas.listarPaginas(manager, null).stream().noneMatch(pagina -> pagina.getRuta().equals("/ruta-revertida")));
     }
 
     @Test
@@ -236,7 +236,8 @@ class CmsIT {
         assertEquals(Rol.CONTENT_CREATOR, creador.getRol());
         mvc.perform(get(PANEL).session(autenticar(revisor.getNombre(), claveRevisor))).andExpect(status().isOk());
         mvc.perform(get(PANEL).session(autenticar(creador.getNombre(), claveCreador))).andExpect(status().isOk());
-        mvc.perform(get("/")).andExpect(redirectedUrl("/home"));
+        mvc.perform(get("/")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Rutas del Perú")));
         mvc.perform(get("/home")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Explorar Tarapoto")));
         for (String ruta : List.of("/cusco", "/arequipa", "/tarapoto")) {
@@ -245,7 +246,7 @@ class CmsIT {
         }
 
         Revision cusco = paginas.buscarPublicada("/cusco");
-        assertEquals(3, paginas.listarPaginas(creador).size());
+        assertEquals(3, paginas.listarPaginas(creador, null).size());
         permisos.cambiarEdicion(manager, creador.getId(), cusco.getPaginaId(), false);
         Revision cambio = paginas.guardarBorrador(manager, cusco.getPaginaId(), cusco.getId(),
                 "Cusco actualizado", "normal", "[]");
@@ -257,7 +258,7 @@ class CmsIT {
 
         assertEquals(eventosPrevios, eventos.count());
         assertEquals(cambio.getId(), paginas.buscarPublicada("/cusco").getId());
-        assertEquals(2, paginas.listarPaginas(creador).size());
+        assertEquals(2, paginas.listarPaginas(creador, null).size());
     }
 
     private Callable<Integer> aprobarAlMismoTiempo(Usuario actor, Long revision, CountDownLatch salida) {

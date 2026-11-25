@@ -21,9 +21,9 @@ server:
         secure: ${CMS_COOKIE_SEGURA:false}
 cms:
   manager:
-    usuario: ${CMS_MANAGER_USUARIO:admin_cms}
-    clave: ${CMS_MANAGER_CLAVE:AdminSeguro1234}
+    usuario: ${CMS_MANAGER_USUARIO:}
+    clave: ${CMS_MANAGER_CLAVE:}
   demo:
-    activa: ${CMS_DEMO_ACTIVA:true}
-    revisor-clave: ${CMS_DEMO_REVISOR_CLAVE:RevisorSeguro1234}
-    creador-clave: ${CMS_DEMO_CREADOR_CLAVE:CreadorSeguro1234}
+    activa: ${CMS_DEMO_ACTIVA:false}
+    revisor-clave: ${CMS_DEMO_REVISOR_CLAVE:}
+    creador-clave: ${CMS_DEMO_CREADOR_CLAVE:}
